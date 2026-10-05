@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v5
+
+      - name: Build the image
+        run: docker build -t deployment-lab:ci .
+
+      - name: Start the container with runtime config
+        run: >
+          docker run -d --name app -p 127.0.0.1:8080:8000
+          -e APP_MESSAGE="CI check" -e BIND_HOST=0.0.0.0
+          deployment-lab:ci
+
+      - name: Smoke test the running app
+        run: python3 tests/smoke_test.py http://127.0.0.1:8080 "CI check"
+
+      - name: Without APP_MESSAGE the app must refuse to start (exit code 1)
+        run: |
+          set +e
+          docker run --rm -e BIND_HOST=0.0.0.0 deployment-lab:ci
+          code=$?
+          set -e
+          if [ "$code" -ne 1 ]; then
+            echo "Expected exit code 1 without APP_MESSAGE, got $code"
+            exit 1
+          fi
+          echo "ok: app refused to start without APP_MESSAGE (exit code 1)"
+
+      - name: Show container logs if anything failed
+        if: failure()
+        run: docker logs app
