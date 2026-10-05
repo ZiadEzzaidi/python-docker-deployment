@@ -30,7 +30,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    if not os.environ.get("APP_MESSAGE", "").strip():
+    if not os.environ.get("APP_MSG", "").strip():
         print("STARTUP ERROR: APP_MESSAGE must be set and non-empty", file=sys.stderr)
         return 1
     port = int(os.environ.get("PORT", "8000"))
