@@ -1,5 +1,7 @@
 # Python app deployment with Docker: config, diagnosis, rollback
 
+[![CI](https://github.com/ZiadEzzaidi/python-docker-deployment/actions/workflows/ci.yml/badge.svg)](https://github.com/ZiadEzzaidi/python-docker-deployment/actions/workflows/ci.yml)
+
 Case study: packaging an existing Python web service so anyone can start it the same way, configure it without touching the code, see why it failed, and roll back a bad release.
 
 ## The problem
@@ -53,6 +55,24 @@ On Windows PowerShell, use `copy .env.example .env` for the first step.
 - **Missing configuration:** with `APP_MESSAGE` empty, the app refuses to start, exits with code 1 and logs `STARTUP ERROR: APP_MESSAGE must be set and non-empty`. Visible with `docker compose ps -a` and `docker compose logs`. Restoring the value and recreating the container brings the service back.
 - **Release and rollback:** version 2.0 was built and deployed, then rolled back to 1.0 without rebuilding; `/health` confirmed the running version each time.
 
+## Continuous integration
+
+Every push to `main` and every pull request runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on a fresh GitHub runner:
+
+1. Build the image.
+2. Start a container with runtime config.
+3. Run [`tests/smoke_test.py`](tests/smoke_test.py): `/health` returns 200 with the version of the code in that commit, `/` returns the message supplied at runtime, unknown paths return 404.
+4. Start the app without `APP_MESSAGE` and require exit code 1, so the safety check is tested too.
+5. If anything fails, print the container logs before the runner is discarded.
+
+The same smoke test runs against a local deployment:
+
+```bash
+python tests/smoke_test.py http://127.0.0.1:8080 "Deployment works"
+```
+
+**Breaking change blocked:** to test the pipeline, a pull request deliberately renamed the variable read by the startup check (`APP_MESSAGE` → `APP_MSG`). CI went red: the container logs showed the startup error even though CI supplied `APP_MESSAGE`, and the diff showed why. The fix was to reject the change rather than rename the variable in CI, because `APP_MESSAGE` is the documented configuration every existing `.env` relies on. `main` never received the bug ([PR #1](https://github.com/ZiadEzzaidi/python-docker-deployment/pull/1)).
+
 ## Key ideas
 
 - **Image vs container:** the image is the frozen package; the container is a running instance of it. Several releases can sit side by side as tagged images.
@@ -61,4 +81,4 @@ On Windows PowerShell, use `copy .env.example .env` for the first step.
 
 ## Scope
 
-Local Docker setup. CI (GitHub Actions) and cloud deployment are the next steps.
+Local Docker setup with CI on GitHub Actions. Cloud deployment is the next step.
