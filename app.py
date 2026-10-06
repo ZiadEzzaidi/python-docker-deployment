@@ -6,7 +6,7 @@ import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
-VERSION = "1.0"
+VERSION = "2.0"
 
 
 class Handler(BaseHTTPRequestHandler):
