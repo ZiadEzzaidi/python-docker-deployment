@@ -25,7 +25,7 @@ if (-not (Test-Aws iam get-role --role-name "$Name-server")) {
 }
 
 Write-Host "2/3 Firewall: HTTP port 80 from $AllowedIp only"
-$vpc = Invoke-Aws ec2 describe-vpcs --filters Name=is-default,Values=true --query "Vpcs[0].VpcId" --output text
+$vpc = Invoke-Aws ec2 describe-vpcs --filters "Name=is-default,Values=true" --query "Vpcs[0].VpcId" --output text
 $sg = Invoke-Aws ec2 create-security-group --group-name "$Name-web" `
     --description "HTTP from allowed IP only" --vpc-id $vpc `
     --tag-specifications "ResourceType=security-group,Tags=[{Key=Project,Value=$Name}]" `
@@ -49,7 +49,7 @@ for ($attempt = 1; ; $attempt++) {
         $instanceId = Invoke-Aws ec2 run-instances --image-id $ami --instance-type t3.micro --count 1 `
             --iam-instance-profile "Name=$Name-server" --security-group-ids $sg `
             --user-data "file://$userDataFile" `
-            --metadata-options HttpTokens=required,HttpEndpoint=enabled `
+            --metadata-options "HttpTokens=required,HttpEndpoint=enabled" `
             --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$Name-server},{Key=Project,Value=$Name}]" "ResourceType=volume,Tags=[{Key=Project,Value=$Name}]" `
             --query "Instances[0].InstanceId" --output text
         break

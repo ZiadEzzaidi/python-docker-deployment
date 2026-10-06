@@ -97,6 +97,8 @@ Scripts in [`deploy/aws/`](deploy/aws/) (PowerShell, AWS CLI v2 signed in):
 ./deploy/aws/destroy.ps1 -AwsProfile <profile>                # delete everything it created
 ```
 
+Measured: `create.ps1` went from nothing to the app answering on AWS in **91 seconds** (with the server role already in place).
+
 ### Evidence (deployed on 6 October 2026, then torn down)
 
 ![App answering from EC2](docs/aws-live-app.jpg)
